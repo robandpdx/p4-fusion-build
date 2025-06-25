@@ -1,0 +1,31 @@
+name: Build on Ubuntu
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+            repository: salesforce/p4-fusion
+      - name: Install dependencies
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y build-essential cmake git openssl libssl-dev curl pkg-config
+            curl -o p4api-glibc2.3-openssl3.tgz https://cdist2.perforce.com/perforce/r24.1/bin.linux26x86_64/p4api-glibc2.3-openssl3.tgz
+            tar zxf p4api-glibc2.3-openssl3.tgz
+            mkdir -p vendor/helix-core-api/linux
+            mv p4api-2024.1.2724731/* vendor/helix-core-api/linux/
+            sudo curl -o /bin/p4 https://cdist2.perforce.com/perforce/r24.1/bin.linux26x86_64/p4
+            sudo chmod +x /bin/p4
+      - name: Build project
+        run: ./generate_cache.sh Debug && ./build.sh
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: p4-fusion-ubuntu
+          path: |- 
+            build/p4-fusion/p4-fusion
